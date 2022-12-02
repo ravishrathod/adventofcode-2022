@@ -85,7 +85,7 @@ func calculateMove(opponentMove string, desiredOutcome string) string {
 	return ""
 }
 
-func calculateScore(opponentMove string, myMove string, movePoints map[string]int) int  {
+func calculateScore(opponentMove string, myMove string, movePoints map[string]int) int {
 	myMovePoint := movePoints[myMove]
 	if opponentMove == myMove {
 		return myMovePoint + 3

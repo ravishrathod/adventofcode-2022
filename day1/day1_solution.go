@@ -41,7 +41,7 @@ func part2(caloriesByElves []int) {
 	sort.Ints(caloriesByElves)
 	totalCaloriesForTopThree := 0
 	for i := 1; i <= 3; i++ {
-		totalCaloriesForTopThree += caloriesByElves[len(caloriesByElves) - i]
+		totalCaloriesForTopThree += caloriesByElves[len(caloriesByElves)-i]
 	}
 	println(totalCaloriesForTopThree)
 }
