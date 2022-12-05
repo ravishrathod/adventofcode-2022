@@ -70,7 +70,7 @@ func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
 		}
 		stackIds := strings.Split(strings.TrimSpace(line), "   ")
 		stacks = make([]*commons.Stack, len(stackIds))
-		for idx, _ := range stackIds {
+		for idx := range stackIds {
 			stacks[idx] = &commons.Stack{}
 		}
 		break
@@ -80,13 +80,10 @@ func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
 	for _, line := range lines {
 		//parse instructions
 		if strings.HasPrefix(line, "move") {
-			updated := strings.Replace(line, "move ", "", 1)
-			updated = strings.Replace(updated, "from ", "", 1)
-			updated = strings.Replace(updated, "to ", "", 1)
-			values := strings.Split(updated, " ")
-			quantity, _ := strconv.Atoi(values[0])
-			from, _ := strconv.Atoi(values[1])
-			to, _ := strconv.Atoi(values[2])
+			parts := strings.Fields(line)
+			quantity, _ := strconv.Atoi(parts[1])
+			from, _ := strconv.Atoi(parts[3])
+			to, _ := strconv.Atoi(parts[5])
 			instructions = append(instructions, Instruction{From: from, To: to, Quantity: quantity})
 		} else if strings.Contains(line, "[") {
 			stackLines.Push(line)
@@ -108,21 +105,14 @@ func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
 
 func updateStacks(line string, stacks []*commons.Stack) {
 	characters := []rune(line)
-	for i := 0; i < len(characters); i++ {
-		if characters[i] == '[' {
+	for i, char := range characters {
+		if char == '[' {
 			crate := string(characters[i+1])
-			stackIndex := findStackIndexForPosition(i)
+			stackIndex := i / 4
 			stackAtPosition := stacks[stackIndex]
 			stackAtPosition.Push(crate)
 		}
 	}
-}
-
-func findStackIndexForPosition(position int) int {
-	if position == 0 {
-		return 0
-	}
-	return position / 4
 }
 
 type Instruction struct {
