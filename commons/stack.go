@@ -2,33 +2,38 @@ package commons
 
 import "errors"
 
-type Stack struct {
-	entries []string
+type Stack[C any] struct {
+	entries []C
 }
 
-func (this *Stack) Push(value string) {
-	this.entries = append(this.entries, value)
+func (s *Stack[C]) Push(value C) {
+	s.entries = append(s.entries, value)
 }
 
-func (this *Stack) Peek() (string, error) {
-	size := len(this.entries)
+func (s *Stack[C]) Peek() (C, error) {
+	size := len(s.entries)
 	if size > 0 {
-		return this.entries[size-1], nil
+		return s.entries[size-1], nil
 	}
-	return "", errors.New("empty stack")
+	return s.getZeroValue(), errors.New("empty stack")
 }
 
-func (this *Stack) Pop() (string, error) {
-	size := len(this.entries)
+func (s *Stack[C]) Pop() (C, error) {
+	size := len(s.entries)
 	if size == 0 {
-		return "", errors.New("empty stack")
+		return s.getZeroValue(), errors.New("empty stack")
 	}
 	index := size - 1
-	value := this.entries[index]
-	this.entries = this.entries[:index]
+	value := s.entries[index]
+	s.entries = s.entries[:index]
 	return value, nil
 }
 
-func (this *Stack) IsEmpty() bool {
-	return len(this.entries) == 0
+func (s *Stack[C]) IsEmpty() bool {
+	return len(s.entries) == 0
+}
+
+func (s *Stack[C]) getZeroValue() C {
+	var zero C
+	return zero
 }

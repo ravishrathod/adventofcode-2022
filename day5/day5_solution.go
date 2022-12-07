@@ -18,7 +18,7 @@ func main() {
 	part2(stacks, instructions)
 }
 
-func part1(stacks []*commons.Stack, instructions []Instruction) {
+func part1(stacks []*commons.Stack[string], instructions []Instruction) {
 	for _, instruction := range instructions {
 		source := stacks[instruction.From-1]
 		destination := stacks[instruction.To-1]
@@ -36,11 +36,11 @@ func part1(stacks []*commons.Stack, instructions []Instruction) {
 	}
 }
 
-func part2(stacks []*commons.Stack, instructions []Instruction) {
+func part2(stacks []*commons.Stack[string], instructions []Instruction) {
 	for _, instruction := range instructions {
 		source := stacks[instruction.From-1]
 		destination := stacks[instruction.To-1]
-		tempStack := &commons.Stack{}
+		tempStack := &commons.Stack[string]{}
 		for i := 0; i < instruction.Quantity; i++ {
 			crate, err := source.Pop()
 			if err != nil {
@@ -59,9 +59,9 @@ func part2(stacks []*commons.Stack, instructions []Instruction) {
 	}
 }
 
-func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
+func parseInput(lines []string) ([]*commons.Stack[string], []Instruction) {
 	var instructions []Instruction
-	var stacks []*commons.Stack
+	var stacks []*commons.Stack[string]
 
 	//create stacks
 	for _, line := range lines {
@@ -69,14 +69,14 @@ func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
 			continue
 		}
 		stackIds := strings.Split(strings.TrimSpace(line), "   ")
-		stacks = make([]*commons.Stack, len(stackIds))
+		stacks = make([]*commons.Stack[string], len(stackIds))
 		for idx := range stackIds {
-			stacks[idx] = &commons.Stack{}
+			stacks[idx] = &commons.Stack[string]{}
 		}
 		break
 	}
 
-	stackLines := &commons.Stack{}
+	stackLines := &commons.Stack[string]{}
 	for _, line := range lines {
 		//parse instructions
 		if strings.HasPrefix(line, "move") {
@@ -103,7 +103,7 @@ func parseInput(lines []string) ([]*commons.Stack, []Instruction) {
 	return stacks, instructions
 }
 
-func updateStacks(line string, stacks []*commons.Stack) {
+func updateStacks(line string, stacks []*commons.Stack[string]) {
 	characters := []rune(line)
 	for i, char := range characters {
 		if char == '[' {

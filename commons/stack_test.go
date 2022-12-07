@@ -6,7 +6,7 @@ import (
 )
 
 func TestStack_IsEmpty(t *testing.T) {
-	stack := &Stack{}
+	stack := &Stack[string]{}
 	assert.True(t, stack.IsEmpty())
 
 	stack.Push("test")
@@ -14,7 +14,7 @@ func TestStack_IsEmpty(t *testing.T) {
 }
 
 func TestStack_Peek(t *testing.T) {
-	stack := &Stack{}
+	stack := &Stack[string]{}
 	value, err := stack.Peek()
 	assert.NotNil(t, err)
 
@@ -29,7 +29,7 @@ func TestStack_Peek(t *testing.T) {
 }
 
 func TestStack_Pop(t *testing.T) {
-	stack := &Stack{}
+	stack := &Stack[string]{}
 	value, err := stack.Pop()
 	assert.NotNil(t, err)
 

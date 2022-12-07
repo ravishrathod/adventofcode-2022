@@ -52,7 +52,7 @@ func part1(sizeMap map[string]int64) {
 func calculateTotalSizes(root *directory) map[string]int64 {
 	start := time.Now()
 	sizeMap := make(map[string]int64)
-	stack := &DirectoryStack{}
+	stack := &commons.Stack[*directory]{}
 	populateStack(root, stack)
 	for !stack.IsEmpty() {
 		dir, _ := stack.Pop()
@@ -68,7 +68,7 @@ func calculateTotalSizes(root *directory) map[string]int64 {
 	return sizeMap
 }
 
-func populateStack(dir *directory, stack *DirectoryStack) {
+func populateStack(dir *directory, stack *commons.Stack[*directory]) {
 	stack.Push(dir)
 	for _, child := range dir.Directories {
 		populateStack(child, stack)
@@ -133,17 +133,17 @@ func createDirectory(name string, parent *directory) *directory {
 		Name:        name,
 		Files:       []*file{},
 		Directories: []*directory{},
-		Parent: parent,
-		TotalSize: -1,
+		Parent:      parent,
+		TotalSize:   -1,
 	}
 }
 
 type directory struct {
-	Name string
-	Files []*file
+	Name        string
+	Files       []*file
 	Directories []*directory
-	Parent *directory
-	TotalSize int64
+	Parent      *directory
+	TotalSize   int64
 }
 
 func (d *directory) GetSize() int64 {
