@@ -21,17 +21,10 @@ func part2(characters []rune) {
 }
 
 func findFirstUniqueSubStringOfLength(characters []rune, length int) int {
-	var lastXChars []rune
-	for idx, char := range characters {
-		if len(lastXChars) == length {
-			if isUnique(lastXChars) {
-				return idx
-			} else {
-				lastXChars = lastXChars[1:]
-				lastXChars = append(lastXChars, char)
-			}
-		} else {
-			lastXChars = append(lastXChars, char)
+	for i := length - 1; i < len(characters); i++ {
+		subStr := characters[i-length+1 : i+1]
+		if isUnique(subStr) {
+			return i + 1
 		}
 	}
 	return -1
