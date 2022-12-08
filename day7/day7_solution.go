@@ -56,13 +56,12 @@ func calculateTotalSizes(root *directory) map[string]int {
 	populateStack(root, stack)
 	for !stack.IsEmpty() {
 		dir, _ := stack.Pop()
-		totalSize := dir.GetSize()
+		totalSize := dir.GetShallowSize()
 		for _, child := range dir.Directories {
 			totalSize += child.TotalSize
 		}
 		dir.TotalSize = totalSize
-		key := getCanonicalName(dir)
-		sizeMap[key] = dir.TotalSize
+		sizeMap[dir.Name] = dir.TotalSize
 	}
 	fmt.Printf("\nTime taken to calculate sizes: %v\n", time.Since(start))
 	return sizeMap
@@ -99,7 +98,7 @@ func parseInput(lines []string) *directory {
 					continue
 				}
 				destinationDir := createDirectory(destinationDirectoryName, currentDir)
-				mapKey := getCanonicalName(destinationDir) //currentDir.Name + "-" + destinationDirectoryName
+				mapKey := destinationDir.Name
 				if directoryMap[mapKey] == nil {
 					currentDir.Directories = append(currentDir.Directories, destinationDir)
 					directoryMap[mapKey] = destinationDir
@@ -111,15 +110,11 @@ func parseInput(lines []string) *directory {
 		} else {
 			if parts[0] == "dir" {
 				dir := createDirectory(parts[1], currentDir)
-				mapKey := getCanonicalName(dir)
-				directoryMap[mapKey] = dir
+				directoryMap[dir.Name] = dir
 				currentDir.Directories = append(currentDir.Directories, dir)
 			} else {
 				size, _ := strconv.Atoi(parts[0])
-				f := &file{
-					Name: parts[1],
-					Size: size,
-				}
+				f := createFile(parts[1], size, currentDir)
 				currentDir.Files = append(currentDir.Files, f)
 			}
 		}
@@ -130,7 +125,7 @@ func parseInput(lines []string) *directory {
 
 func createDirectory(name string, parent *directory) *directory {
 	return &directory{
-		Name:        name,
+		Name:        getName(name, parent),
 		Files:       []*file{},
 		Directories: []*directory{},
 		Parent:      parent,
@@ -146,7 +141,7 @@ type directory struct {
 	TotalSize   int
 }
 
-func (d *directory) GetSize() int {
+func (d *directory) GetShallowSize() int {
 	size := 0
 	for _, f := range d.Files {
 		size += f.Size
@@ -154,22 +149,21 @@ func (d *directory) GetSize() int {
 	return size
 }
 
+func createFile(name string, size int, parent *directory) *file {
+	return &file{
+		Name: getName(name, parent),
+		Size: size,
+	}
+}
+
+func getName(name string, parent *directory) string {
+	if parent == nil {
+		return name
+	}
+	return parent.Name + "/" + name
+}
+
 type file struct {
 	Name string
 	Size int
-}
-
-func getCanonicalName(d *directory) string {
-	return prependParentName(d.Name, d.Parent)
-}
-
-func prependParentName(input string, d *directory) string {
-	name := input
-	if d != nil {
-		name = d.Name + "/" + input
-		if d.Parent != nil {
-			return prependParentName(name, d.Parent)
-		}
-	}
-	return name
 }
