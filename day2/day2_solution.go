@@ -5,9 +5,13 @@ import (
 	"strings"
 )
 
-const ROCK = "ROCK"
-const PAPER = "PAPER"
-const SCISSORS = "SCISSORS"
+type Move string
+
+const (
+	ROCK     Move = "ROCK"
+	PAPER    Move = "PAPER"
+	SCISSORS Move = "SCISSORS"
+)
 
 func main() {
 	lines, err := commons.ReadFile("input/day2.txt")
@@ -15,12 +19,12 @@ func main() {
 		panic(err)
 	}
 
-	var opponentMoves = make(map[string]string)
+	var opponentMoves = make(map[string]Move)
 	opponentMoves["A"] = ROCK
 	opponentMoves["B"] = PAPER
 	opponentMoves["C"] = SCISSORS
 
-	var movePoints = make(map[string]int)
+	var movePoints = make(map[Move]int)
 	movePoints[ROCK] = 1
 	movePoints[PAPER] = 2
 	movePoints[SCISSORS] = 3
@@ -29,8 +33,8 @@ func main() {
 	part2(lines, opponentMoves, movePoints)
 }
 
-func part1(lines []string, opponentMoves map[string]string, movePoints map[string]int) {
-	var myMoves = make(map[string]string)
+func part1(lines []string, opponentMoves map[string]Move, movePoints map[Move]int) {
+	var myMoves = make(map[string]Move)
 	myMoves["X"] = ROCK
 	myMoves["Y"] = PAPER
 	myMoves["Z"] = SCISSORS
@@ -44,7 +48,7 @@ func part1(lines []string, opponentMoves map[string]string, movePoints map[strin
 	println(totalPoints)
 }
 
-func part2(lines []string, opponentMoves map[string]string, movePoints map[string]int) {
+func part2(lines []string, opponentMoves map[string]Move, movePoints map[Move]int) {
 	totalPoints := 0
 	for _, line := range lines {
 		input := strings.Split(line, " ")
@@ -57,7 +61,7 @@ func part2(lines []string, opponentMoves map[string]string, movePoints map[strin
 	println(totalPoints)
 }
 
-func calculateMove(opponentMove string, desiredOutcome string) string {
+func calculateMove(opponentMove Move, desiredOutcome string) Move {
 	if desiredOutcome == "Y" {
 		return opponentMove
 	}
@@ -85,7 +89,7 @@ func calculateMove(opponentMove string, desiredOutcome string) string {
 	return ""
 }
 
-func calculateScore(opponentMove string, myMove string, movePoints map[string]int) int {
+func calculateScore(opponentMove Move, myMove Move, movePoints map[Move]int) int {
 	myMovePoint := movePoints[myMove]
 	if opponentMove == myMove {
 		return myMovePoint + 3
@@ -97,7 +101,7 @@ func calculateScore(opponentMove string, myMove string, movePoints map[string]in
 	return myMovePoint
 }
 
-func didIWin(opponentMove string, myMove string) bool {
+func didIWin(opponentMove Move, myMove Move) bool {
 	if opponentMove == ROCK {
 		return myMove == PAPER
 	}
