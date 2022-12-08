@@ -20,14 +20,14 @@ func main() {
 	part2(sizeMap)
 }
 
-func part2(sizeMap map[string]int64) {
+func part2(sizeMap map[string]int) {
 	const totalSize = 70000000
 	const minSpaceRequired = 30000000
 	totalUsed := sizeMap["/"]
 	freeSpaceAvailable := totalSize - totalUsed
 	moreSpaceNeeded := minSpaceRequired - freeSpaceAvailable
 
-	var sizeToPurge int64 = math.MaxInt
+	sizeToPurge := math.MaxInt
 
 	for _, size := range sizeMap {
 		if size >= moreSpaceNeeded {
@@ -39,8 +39,8 @@ func part2(sizeMap map[string]int64) {
 	println(sizeToPurge)
 }
 
-func part1(sizeMap map[string]int64) {
-	var sizeToPurge int64 = 0
+func part1(sizeMap map[string]int) {
+	sizeToPurge := 0
 	for _, size := range sizeMap {
 		if size <= 100000 {
 			sizeToPurge += size
@@ -49,9 +49,9 @@ func part1(sizeMap map[string]int64) {
 	println(sizeToPurge)
 }
 
-func calculateTotalSizes(root *directory) map[string]int64 {
+func calculateTotalSizes(root *directory) map[string]int {
 	start := time.Now()
-	sizeMap := make(map[string]int64)
+	sizeMap := make(map[string]int)
 	stack := &commons.Stack[*directory]{}
 	populateStack(root, stack)
 	for !stack.IsEmpty() {
@@ -118,7 +118,7 @@ func parseInput(lines []string) *directory {
 				size, _ := strconv.Atoi(parts[0])
 				f := &file{
 					Name: parts[1],
-					Size: int64(size),
+					Size: size,
 				}
 				currentDir.Files = append(currentDir.Files, f)
 			}
@@ -143,11 +143,11 @@ type directory struct {
 	Files       []*file
 	Directories []*directory
 	Parent      *directory
-	TotalSize   int64
+	TotalSize   int
 }
 
-func (d *directory) GetSize() int64 {
-	var size int64 = 0
+func (d *directory) GetSize() int {
+	size := 0
 	for _, f := range d.Files {
 		size += f.Size
 	}
@@ -156,7 +156,7 @@ func (d *directory) GetSize() int64 {
 
 type file struct {
 	Name string
-	Size int64
+	Size int
 }
 
 func getCanonicalName(d *directory) string {
