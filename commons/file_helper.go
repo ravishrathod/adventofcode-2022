@@ -27,7 +27,7 @@ func LinetoIntArray(line string) []int {
 	values := strings.Split(line, ",")
 	var days []int
 	for _, val := range values {
-		day, _ := strconv.Atoi(val)
+		day, _ := strconv.Atoi(strings.TrimSpace(val))
 		days = append(days, day)
 	}
 	return days
