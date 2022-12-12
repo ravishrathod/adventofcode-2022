@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	lines, err := commons.ReadFile("input/day11_sample.txt")
+	lines, err := commons.ReadFile("input/day11.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -23,7 +23,7 @@ func main() {
 		monkeys = append(monkeys, monkey)
 	}
 	part1(monkeyMap, monkeys)
-	part2(monkeyMap, monkeys)
+	//part2(monkeyMap, monkeys)
 }
 
 func part1(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
@@ -31,11 +31,15 @@ func part1(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
 	println(monkeyBusiness)
 }
 
-func part2(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
-	monkeyBusiness := processRounds(10000, 1, monkeyMap, monkeys)
-	println(monkeyBusiness)
-}
-func processRounds(rounds int, reliefFactor uint64, monkeyMap map[string]*Monkey, monkeys []*Monkey) int {
+//	func part2(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
+//		reliefFactor := 1
+//		for _, monkey := range monkeys {
+//			reliefFactor *= monkey.Test.Condition
+//		}
+//		monkeyBusiness := processRounds(10000, 10, monkeyMap, monkeys)
+//		println(monkeyBusiness)
+//	}
+func processRounds(rounds int, reliefFactor int, monkeyMap map[string]*Monkey, monkeys []*Monkey) int {
 	itemsInspectedByMonkey := make(map[string]int)
 	for i := 0; i < rounds; i++ {
 		for _, monkey := range monkeys {
@@ -62,11 +66,11 @@ func parseMonkey(lines []string) *Monkey {
 	part := strings.Split(lines[0], " ")[1]
 	monkeyId := strings.Replace(part, ":", "", 1)
 	//worryLevels := commons.LinetoIntArray(strings.Replace(lines[1], "Starting items: ", "", 1))
-	var worryLevels []uint64
+	var worryLevels []int
 	levelsString := strings.Replace(lines[1], "Starting items: ", "", 1)
 	for _, str := range strings.Split(levelsString, ",") {
 		str = strings.TrimSpace(str)
-		val, _ := strconv.ParseUint(str, 0, 64)
+		val, _ := strconv.Atoi(str)
 		worryLevels = append(worryLevels, val)
 	}
 
@@ -82,7 +86,7 @@ func parseMonkey(lines []string) *Monkey {
 	onPass := strings.Replace(lines[4], "    If true: throw to monkey ", "", 1)
 	onFail := strings.Replace(lines[5], "    If false: throw to monkey ", "", 1)
 	throwTest := &ThrowTest{
-		Condition: uint64(testCondition),
+		Condition: int(testCondition),
 		OnPass:    onPass,
 		OnFail:    onFail,
 	}
@@ -96,20 +100,20 @@ func parseMonkey(lines []string) *Monkey {
 
 type Monkey struct {
 	Id              string
-	ItemsWorryLevel []uint64
+	ItemsWorryLevel []int
 	Operation       *Operation
 	Test            *ThrowTest
 }
 
-func (m *Monkey) GetNewWorryLevel(old uint64) uint64 {
+func (m *Monkey) GetNewWorryLevel(old int) int {
 	return m.Operation.apply(old)
 }
 
-func (m *Monkey) GetMonkeyToThrowAt(worryLevel uint64) string {
+func (m *Monkey) GetMonkeyToThrowAt(worryLevel int) string {
 	return m.Test.Evaluate(worryLevel)
 }
 
-func (m *Monkey) AddItem(worryLevel uint64) {
+func (m *Monkey) AddItem(worryLevel int) {
 	m.ItemsWorryLevel = append(m.ItemsWorryLevel, worryLevel)
 }
 
@@ -121,12 +125,12 @@ func (m *Monkey) ThrowItem() {
 }
 
 type ThrowTest struct {
-	Condition uint64
+	Condition int
 	OnPass    string
 	OnFail    string
 }
 
-func (t *ThrowTest) Evaluate(worryLevel uint64) string {
+func (t *ThrowTest) Evaluate(worryLevel int) string {
 	if worryLevel%t.Condition == 0 {
 		return t.OnPass
 	}
@@ -138,13 +142,13 @@ type Operation struct {
 	Operand  string
 }
 
-func (o *Operation) apply(old uint64) uint64 {
-	currentOperand := uint64(0)
+func (o *Operation) apply(old int) int {
+	currentOperand := int(0)
 	if o.Operand == "old" {
 		currentOperand = old
 	} else {
 		strconv.ParseUint(o.Operand, 0, 64)
-		currentOperand, _ = strconv.ParseUint(o.Operand, 0, 64)
+		currentOperand, _ = strconv.Atoi(o.Operand)
 	}
 	if o.Operator == "*" {
 		return old * currentOperand
