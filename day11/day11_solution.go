@@ -12,40 +12,32 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	monkeyMap := make(map[string]*Monkey)
-	var monkeys []*Monkey
-
-	for i := 0; i < len(lines); {
-		chunk := lines[i : i+6]
-		i += 7
-		monkey := parseMonkey(chunk)
-		monkeyMap[monkey.Id] = monkey
-		monkeys = append(monkeys, monkey)
-	}
-	part1(monkeyMap, monkeys)
-	//part2(monkeyMap, monkeys)
+	part1(lines)
+	part2(lines)
 }
 
-func part1(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
-	monkeyBusiness := processRounds(20, 3, monkeyMap, monkeys)
+func part1(lines []string) {
+	monkeyMap, monkeys := parseMonkeys(lines)
+	monkeyBusiness := processRounds(20, func(input int) int { return input / 3 }, monkeyMap, monkeys)
 	println(monkeyBusiness)
 }
 
-//	func part2(monkeyMap map[string]*Monkey, monkeys []*Monkey) {
-//		reliefFactor := 1
-//		for _, monkey := range monkeys {
-//			reliefFactor *= monkey.Test.Condition
-//		}
-//		monkeyBusiness := processRounds(10000, 10, monkeyMap, monkeys)
-//		println(monkeyBusiness)
-//	}
-func processRounds(rounds int, reliefFactor int, monkeyMap map[string]*Monkey, monkeys []*Monkey) int {
+func part2(lines []string) {
+	monkeyMap, monkeys := parseMonkeys(lines)
+	reliefFactor := 1
+	for _, monkey := range monkeys {
+		reliefFactor *= monkey.Test.Condition
+	}
+	monkeyBusiness := processRounds(10000, func(input int) int { return input % reliefFactor }, monkeyMap, monkeys)
+	println(monkeyBusiness)
+}
+func processRounds(rounds int, reliefFactor func(input int) int, monkeyMap map[string]*Monkey, monkeys []*Monkey) int {
 	itemsInspectedByMonkey := make(map[string]int)
 	for i := 0; i < rounds; i++ {
 		for _, monkey := range monkeys {
 			for _, itemWorryLevel := range monkey.ItemsWorryLevel {
 				newWorryLevel := monkey.GetNewWorryLevel(itemWorryLevel)
-				newWorryLevel = newWorryLevel / reliefFactor
+				newWorryLevel = reliefFactor(newWorryLevel)
 				targetMonkeyId := monkey.GetMonkeyToThrowAt(newWorryLevel)
 				monkeyMap[targetMonkeyId].AddItem(newWorryLevel)
 				monkey.ThrowItem()
@@ -62,18 +54,24 @@ func processRounds(rounds int, reliefFactor int, monkeyMap map[string]*Monkey, m
 	monkeyBusiness := throws[len(throws)-1] * throws[len(throws)-2]
 	return monkeyBusiness
 }
+
+func parseMonkeys(lines []string) (map[string]*Monkey, []*Monkey) {
+	monkeyMap := make(map[string]*Monkey)
+	var monkeys []*Monkey
+
+	for i := 0; i < len(lines); {
+		chunk := lines[i : i+6]
+		i += 7
+		monkey := parseMonkey(chunk)
+		monkeyMap[monkey.Id] = monkey
+		monkeys = append(monkeys, monkey)
+	}
+	return monkeyMap, monkeys
+}
 func parseMonkey(lines []string) *Monkey {
 	part := strings.Split(lines[0], " ")[1]
 	monkeyId := strings.Replace(part, ":", "", 1)
-	//worryLevels := commons.LinetoIntArray(strings.Replace(lines[1], "Starting items: ", "", 1))
-	var worryLevels []int
-	levelsString := strings.Replace(lines[1], "Starting items: ", "", 1)
-	for _, str := range strings.Split(levelsString, ",") {
-		str = strings.TrimSpace(str)
-		val, _ := strconv.Atoi(str)
-		worryLevels = append(worryLevels, val)
-	}
-
+	worryLevels := commons.LinetoIntArray(strings.Replace(lines[1], "Starting items: ", "", 1))
 	operationString := strings.Replace(lines[2], "  Operation: new = old ", "", 1)
 	operationString = strings.TrimSpace(operationString)
 	parts := strings.Split(operationString, " ")
@@ -86,7 +84,7 @@ func parseMonkey(lines []string) *Monkey {
 	onPass := strings.Replace(lines[4], "    If true: throw to monkey ", "", 1)
 	onFail := strings.Replace(lines[5], "    If false: throw to monkey ", "", 1)
 	throwTest := &ThrowTest{
-		Condition: int(testCondition),
+		Condition: testCondition,
 		OnPass:    onPass,
 		OnFail:    onFail,
 	}
@@ -143,11 +141,10 @@ type Operation struct {
 }
 
 func (o *Operation) apply(old int) int {
-	currentOperand := int(0)
+	currentOperand := 0
 	if o.Operand == "old" {
 		currentOperand = old
 	} else {
-		strconv.ParseUint(o.Operand, 0, 64)
 		currentOperand, _ = strconv.Atoi(o.Operand)
 	}
 	if o.Operator == "*" {
