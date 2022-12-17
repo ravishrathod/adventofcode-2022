@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"ravishrathod/adventofcode-2022/commons"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -13,94 +15,138 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	sensorToBeaconMap, beaconLocations := parseInput(lines)
-	part1(sensorToBeaconMap, beaconLocations)
-	//part2(sensorToBeaconMap)
+	sensorToBeaconMap := parseInput(lines)
+	part1(sensorToBeaconMap)
+	part2(sensorToBeaconMap)
 }
 
-func part1(sensorToBeaconMap map[Point]Point, beaconLocations map[Point]bool) {
+func part1(sensorToBeaconMap map[Point]Point) {
 	start := time.Now()
-	pointsMonitored := make(map[Point]bool)
 	rowToMonitor := 2000000
-	for sensor, beacon := range sensorToBeaconMap {
-		distance := calculateDistance(sensor, beacon)
-		target := Point{
-			X: sensor.X,
-			Y: rowToMonitor,
+	coverages := calculateCoverageAtRow(sensorToBeaconMap, rowToMonitor)
+
+	beaconsAtX := make(map[int]bool)
+	for _, beacon := range sensorToBeaconMap {
+		if beacon.Y == rowToMonitor {
+			beaconsAtX[beacon.X] = true
 		}
-		if isFartherThan(sensor, target, distance) {
-			continue
-		}
-		pointsMonitored[target] = true
-		offset := 1
-		for true {
-			leftPoint := target.left(offset)
-			if isFartherThan(sensor, leftPoint, distance) {
-				break
+	}
+	totalPointsCovered := 0
+	beaconsCovered := make(map[int]bool)
+	for i := 0; i < len(coverages); i++ {
+		if i == 0 {
+			current := coverages[i]
+			last := Coverage{
+				From: current.From - 1,
+				To:   current.From - 1,
 			}
-			pointsMonitored[leftPoint] = true
-			pointsMonitored[target.right(offset)] = true
-			offset++
+			pointsCovered := findTrueCoverage(last, current, beaconsAtX, beaconsCovered)
+			totalPointsCovered += pointsCovered
+		} else {
+			last := coverages[i-1]
+			current := coverages[i]
+			pointsCovered := findTrueCoverage(last, current, beaconsAtX, beaconsCovered)
+			totalPointsCovered += pointsCovered
 		}
 	}
-	monitoredEmptyLoc := 0
-	for location, _ := range pointsMonitored {
-		if !beaconLocations[location] {
-			monitoredEmptyLoc++
-		}
-	}
-	println(monitoredEmptyLoc)
+	println(totalPointsCovered - len(beaconsCovered))
 	fmt.Printf("Time taken: %v\n", time.Since(start))
 }
 
 func part2(sensorToBeaconMap map[Point]Point) {
-	//a := 4000000
+	start := time.Now()
 	upperLimit := 4000000
-	//distressLoc := Point{}
-	freqChan := make(chan int)
-	for x := 0; x <= upperLimit; x++ {
-		for y := 0; y <= upperLimit; y++ {
-			//frequency := a*x + y
-			//if !isMonitored(x, y, sensorToBeaconMap) {
-			//	distressLoc.X = x
-			//	distressLoc.Y = y
-			//	fmt.Printf("\nDistress beacon at: %v", distressLoc)
-			//	fmt.Printf("\nFrequency: %v", frequency)
-			//	return
-			//}
-			go calculateDistressFrequency(x, y, sensorToBeaconMap, freqChan)
+	for y := 0; y <= upperLimit; y++ {
+		coverages := calculateCoverageAtRow(sensorToBeaconMap, y)
+		x := findUnScannedPoint(coverages, 0, upperLimit)
+		if x >= 0 {
+			frequency := x*4000000 + y
+			println(frequency)
+			fmt.Printf("Time taken: %v\n", time.Since(start))
+			return
 		}
 	}
-	frequency := <-freqChan
-	println(frequency)
-}
-func calculateDistressFrequency(x int, y int, sensorToBeaconMap map[Point]Point, freqChan chan int) {
-	//fmt.Printf("\ncalculating for (%v,%v)", x, y)
-	a := 4000000
-	frequency := a*x + y
-	if !isMonitored(x, y, sensorToBeaconMap) {
-		fmt.Printf("\nDistress beacon at: %v, %v", x, y)
-		fmt.Printf("\nFrequency: %v\n", frequency)
-		freqChan <- frequency
-	}
-}
-func isMonitored(x int, y int, sensorToBeaconMap map[Point]Point) bool {
-	target := Point{
-		X: x,
-		Y: y,
-	}
-	for sensor, beacon := range sensorToBeaconMap {
-		distance := calculateDistance(sensor, beacon)
-		if !isFartherThan(sensor, target, distance) {
-			return true
-		}
-	}
-	return false
+	fmt.Printf("Time taken: %v\n", time.Since(start))
+	println("failed to find empty points")
 }
 
-func isFartherThan(source Point, target Point, distance int) bool {
-	return calculateDistance(source, target) > distance
+func calculateCoverageAtRow(sensorToBeaconMap map[Point]Point, rowToMonitor int) []Coverage {
+	var coverages []Coverage
+	for sensor, beacon := range sensorToBeaconMap {
+		monitoringDistance := calculateDistance(sensor, beacon)
+		nearestPointOnLine := Point{
+			X: sensor.X,
+			Y: rowToMonitor,
+		}
+		shortestDistanceToLine := calculateDistance(sensor, nearestPointOnLine)
+		if shortestDistanceToLine > monitoringDistance {
+			continue
+		}
+		sweep := monitoringDistance - shortestDistanceToLine
+		coverage := Coverage{
+			From: nearestPointOnLine.X - sweep,
+			To:   nearestPointOnLine.X + sweep,
+		}
+		coverages = append(coverages, coverage)
+	}
+	sort.Slice(coverages, func(i, j int) bool {
+		if coverages[i].From == coverages[j].From {
+			return coverages[i].To < coverages[j].To
+		}
+		return coverages[i].From < coverages[j].From
+	})
+	return coverages
 }
+
+func findTrueCoverage(last Coverage, current Coverage, beaconsAtX map[int]bool, beaconsCovered map[int]bool) int {
+	coverage := int(math.Abs(float64(current.To-current.From))) + 1
+	overlap := 0
+	if current.From > last.To {
+		overlap = 0
+	} else {
+		overlapFrom := current.From
+		overlapTo := 0
+		if current.To <= last.To {
+			overlapTo = current.To
+		} else {
+			overlapTo = last.To
+		}
+		overlap = int(math.Abs(float64(overlapTo-overlapFrom))) + 1
+	}
+	for x, _ := range beaconsAtX {
+		if x >= current.From && x <= current.To {
+			beaconsCovered[x] = true
+		}
+	}
+	adjustedCoverage := coverage - overlap
+	if adjustedCoverage < 0 {
+		adjustedCoverage = 0
+	}
+	return adjustedCoverage
+}
+
+func findUnScannedPoint(coverages []Coverage, lowerLimit int, upperLimit int) int {
+	maxX := 0
+	for i := 1; i < len(coverages); i++ {
+		last := coverages[i-1]
+		current := coverages[i]
+		if current.From > last.To+1 {
+			possiblePoint := current.From - 1
+			if possiblePoint <= upperLimit && possiblePoint >= lowerLimit && possiblePoint > maxX {
+				return possiblePoint
+			}
+		}
+		currentMaxX := int(math.Max(float64(last.To), float64(current.To)))
+		if currentMaxX > maxX {
+			maxX = currentMaxX
+		}
+	}
+	if maxX <= upperLimit && maxX >= lowerLimit {
+		return maxX
+	}
+	return -1
+}
+
 func calculateDistance(from Point, to Point) int {
 	deltaX := from.X - to.X
 	if deltaX < 0 {
@@ -144,9 +190,13 @@ func (p *Point) right(offset int) Point {
 	}
 }
 
-func parseInput(lines []string) (map[Point]Point, map[Point]bool) {
+type Coverage struct {
+	From int
+	To   int
+}
+
+func parseInput(lines []string) map[Point]Point {
 	sensorToBeaconMap := make(map[Point]Point)
-	beaconLocations := make(map[Point]bool)
 	for _, line := range lines {
 		parts := strings.Split(line, ":")
 		sensorPart := parts[0]
@@ -158,9 +208,6 @@ func parseInput(lines []string) (map[Point]Point, map[Point]bool) {
 		beaconLocation := parsePoint(beaconPart)
 
 		sensorToBeaconMap[*sensorLocation] = *beaconLocation
-		beaconLocations[*beaconLocation] = true
 	}
-	return sensorToBeaconMap, beaconLocations
+	return sensorToBeaconMap
 }
-
-// x*4000000 + y = 56000011
